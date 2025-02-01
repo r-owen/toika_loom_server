@@ -5,6 +5,15 @@ This server is intended to allow you to control your loom from any phone, tablet
 This server must run on a computer that is connected (via a USB cable) to your loom.
 This code has only been tested on macOS but should also work on any flavor of linux.
 
+Warning: this software ignores the reverse button on the loom;
+to change directions you must push the direction arrow on the web display.
+This means you should probably run your web browser on a phone or tablet mounted somewhere very convenient,
+such as to the front of the castle.
+I made this difficult choice because the loom does not report the state of the "reverse" button on the dobby head;
+the software has no idea the direction has changed until you request the next pick.
+If the direction were set by the "reverse" button, the display would be misleading some of the time.
+By controlling direction in softare, the display is always correct.
+
 Warning: this software has not yet been tested on a real loom, because I don't own a Toika loom yet.
 Please test it with a computer you already own before buying a dedicated server computer.
 
@@ -78,10 +87,9 @@ You are now ready to weave.
   
     * The square button below that shows the weave direction: whether you are weaving (green down arrow) or unweaving (red up arrow).
       The arrow points in the direction cloth is moving through the loom.
-      You can change the weave direction by pressing this button, or by pressing the "UNW" button on the loom's control panel.
-
-* To advance to the next pick (weaving or unweaving, depending on the weave direction):
-  press the loom's pedal or the "PICK" button on the loom's control panel.
+      You can only change the weave direction by pressing this button;
+      the software ignores the "reverse" button on the dobby head
+      (for reasons explained near the beginning of this document).
 
 * The software will automatically repeat patterns if you weave or unweave beyond the end.
   However, you must advance twice when you reach an end, before the next set of shafts is raised.
@@ -89,7 +97,7 @@ You are now ready to weave.
   The next advance will show the desired shed.
 
 * To jump to a different pick and/or repeat number is a two-step process:
-  first you request the jump, then you advance to it by pressing the pedal or "PICK" button.
+  first you request the jump, then you advance to it by pressing the loom's pedal.
   (Two steps are necessary because the loom will not accept an unsolicited command to raise shafts.)
   In detail:
 
@@ -105,7 +113,7 @@ You are now ready to weave.
       * The pattern display will show the new pick in the center row, with a dotted box around it.
         (But if you are only changing the repeat number, the box will be solid.)
 
-    * Advance to the next pick by pressing the loom's pedal or the "PICK" button on the loom's control panel.
+    * Advance to the next pick by pressing the loom's pedal.
       Until you advance to the next pick, you can request a different jump
       (in case you got it wrong the first time) or cancel the jump in several ways:
     
