@@ -113,15 +113,9 @@ class MockLoom:
                     self.pick_wanted = False
                     if self.verbose:
                         self.log.info(f"MockLoom: raise shafts {self.shaft_word:08x}")
-                elif len(cmdbytes) == 3:
-                    cmdstr = cmdbytes.decode()
-                    if cmdstr[0] != "#":
-                        self.log.warning(
-                            f"MockLoom: unrecognized text command: {cmdbytes!r}"
-                        )
-                        continue
-
+                elif len(cmdbytes) == 3 and cmdbytes[0:1] == b"#":
                     # Out of band command specific to the mock loom.
+                    cmdstr = cmdbytes.decode()
                     match cmdstr[1].lower():
                         case "c":
                             if self.verbose:

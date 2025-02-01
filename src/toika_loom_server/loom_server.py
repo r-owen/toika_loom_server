@@ -264,9 +264,9 @@ class LoomServer:
             await self.report_loom_connection_state()
 
     async def command_pick(self, pick: Pick) -> None:
-        """Send an =C<shaft_word> pick command to the loom"""
+        """Send a shaft_word to the loom"""
         shaft_word = sum(1 << i for i, isup in enumerate(pick.are_shafts_up) if isup)
-        await self.command_loom(f"=C{shaft_word:08x}")
+        await self.command_loom_bytes(shaft_word.to_bytes(length=4, byteorder="big"))
 
     async def clear_jump_pick(self, force_output=False):
         """Clear self.jump_pick and report value if changed or force_output
@@ -285,20 +285,32 @@ class LoomServer:
             await self.report_jump_pick_number()
 
     async def command_loom(self, cmd: str) -> None:
-        """Send a command to the loom.
+        """Send a command string to the loom.
 
         Parameters
         ----------
         cmd : str
+            The command str to send, without a terminator.
+            (This method will append the terminator).
+        """
+        await self.command_loom_bytes(cmd.encode())
+
+    async def command_loom_bytes(self, cmdbytes: bytes) -> None:
+        """Send a command bytes to the loom
+
+        Parameters
+        ----------
+        cmdbytes : bytes
             The command to send, without a terminator.
             (This method will append the terminator).
         """
         if self.loom_writer is None or self.loom_writer.is_closing():
             raise RuntimeError("Cannot write to the loom: no connection.")
-        cmd_bytes = cmd.encode() + TERMINATOR
         if self.verbose:
-            self.log.info(f"LoomServer: sending command to loom: {cmd_bytes!r}")
-        self.loom_writer.write(cmd_bytes)
+            self.log.info(
+                f"LoomServer: sending command to loom: {cmdbytes + TERMINATOR!r}"
+            )
+        self.loom_writer.write(cmdbytes + TERMINATOR)
         await self.loom_writer.drain()
 
     def increment_pick_number(self) -> int:
@@ -383,14 +395,11 @@ class LoomServer:
         await self.clear_jump_pick()
 
     async def cmd_weave_direction(self, command: SimpleNamespace) -> None:
-        # Warning: this code assumes that the loom server sends "=u"
-        # after it receives "=U". It is not clear from the manual
-        # if that is actually the case.
-        loom_command = f"=U{int(not command.forward)}"
-        await self.command_loom(loom_command)
+        self.weave_forward = command.forward
+        await self.report_weave_direction()
 
     async def cmd_oobcommand(self, command: SimpleNamespace) -> None:
-        await self.command_loom(f"=#{command.command}")
+        await self.command_loom(f"#{command.command}")
 
     async def read_client_loop(self) -> None:
         """Read and process commands from the client."""
@@ -404,10 +413,7 @@ class LoomServer:
             await self.clear_jump_pick(force_output=True)
             await self.report_current_pattern()
             await self.report_current_pick_number()
-            if self.loom_connected:
-                # request loom status
-                await self.command_loom("=Q")
-            else:
+            if not self.loom_connected:
                 await self.connect_to_loom()
             while self.client_connected:
                 assert self.websocket is not None
@@ -491,81 +497,40 @@ class LoomServer:
                 if self.verbose:
                     self.log.info(f"LoomServer: read loom reply: {reply_bytes!r}")
                 if not reply_bytes:
-                    print("WARNING: no bytes; quit read_loom_loop")
+                    self.log.warning("Reader closed; quit read_loom_loop")
                     return
                 reply = reply_bytes.decode().strip()
-                if len(reply) < 2:
-                    message = f"invalid loom reply {reply!r}: less than 2 chars"
+                # The only possible replies from the loom are:
+                # "1": request next forward pick
+                # "2": request next backward pick
+                # TODO: allow the user to choose whether to use the loom's
+                # commanded direction (respect the "reverse" button)
+                # or the software's commanded direction.
+                # For now only the software works.
+                if reply not in {"1", "2"}:
+                    message = f"invalid loom reply {reply!r}: must be '1' or '2'"
                     self.log.warning(f"LoomServer: {message}")
                     await self.report_command_problem(
                         message=message,
                         severity=MessageSeverityEnum.WARNING,
                     )
                     continue
-                if reply[0] != "=":
-                    message = f"invalid loom reply {reply!r}: no leading '='"
-                    self.log.warning(f"LoomServer: {message}")
-                    await self.report_command_problem(
-                        message=message,
-                        severity=MessageSeverityEnum.WARNING,
-                    )
-                    continue
-                reply_char = reply[1]
-                reply_data = reply[2:]
-                match reply_char:
-                    case "c":
-                        # Shafts that are up
-                        pass
-                    case "u":
-                        # Weave direction
-                        # The loom expects a new pick, as a result
-                        if reply_data == "0":
-                            self.weave_forward = True
-                        elif reply_data == "1":
-                            self.weave_forward = False
-                        else:
-                            message = (
-                                f"invalid loom reply {reply!r}: "
-                                "direction must be 0 or 1"
-                            )
-                            self.log.warning(f"LoomServer: {message}")
-                            await self.report_command_problem(
-                                message=message, severity=MessageSeverityEnum.WARNING
-                            )
-                            continue
-                        await self.report_weave_direction()
-                    case "s":
-                        # Loom status (may include a request for the next pick)
-                        state_word = int(reply_data, base=16)
-                        await self.report_loom_state(state_word)
 
-                        # Check for error flag
-                        error_flag = bool(state_word & 0x8)
-                        if error_flag != self.loom_error_flag:
-                            self.loom_error_flag = error_flag
-                            if self.verbose:
-                                self.log.info(
-                                    f"LoomServer: loom error flag changed to {error_flag}"
-                                )
-
-                        pick_wanted = bool(state_word & 0x4)
-                        if pick_wanted and self.current_pattern is not None:
-                            # Command a new pick, if there is one.
-                            if self.jump_pick.pick_number is not None:
-                                new_pick_number = self.jump_pick.pick_number
-                                self.current_pattern.set_current_pick_number(
-                                    new_pick_number
-                                )
-                            else:
-                                new_pick_number = self.increment_pick_number()
-                            if self.jump_pick.repeat_number is not None:
-                                self.current_pattern.repeat_number = (
-                                    self.jump_pick.repeat_number
-                                )
-                            pick = self.current_pattern.get_current_pick()
-                            await self.command_pick(pick)
-                            await self.clear_jump_pick()
-                            await self.report_current_pick_number()
+                if self.current_pattern is not None:
+                    # Command a new pick, if there is one.
+                    if self.jump_pick.pick_number is not None:
+                        new_pick_number = self.jump_pick.pick_number
+                        self.current_pattern.set_current_pick_number(new_pick_number)
+                    else:
+                        new_pick_number = self.increment_pick_number()
+                    if self.jump_pick.repeat_number is not None:
+                        self.current_pattern.repeat_number = (
+                            self.jump_pick.repeat_number
+                        )
+                    pick = self.current_pattern.get_current_pick()
+                    await self.command_pick(pick)
+                    await self.clear_jump_pick()
+                    await self.report_current_pick_number()
 
         except asyncio.CancelledError:
             pass
@@ -626,14 +591,6 @@ class LoomServer:
         else:
             state = client_replies.ConnectionStateEnum.DISCONNECTED
         reply = client_replies.LoomConnectionState(state=state, reason=reason)
-        await self.reply_to_client(reply)
-
-    async def report_loom_state(
-        self,
-        state_word: int,
-    ) -> None:
-        """Report LoomState to the client."""
-        reply = client_replies.LoomState.from_state_word(state_word)
         await self.reply_to_client(reply)
 
     async def report_pattern_names(self) -> None:

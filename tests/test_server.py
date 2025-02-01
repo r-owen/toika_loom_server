@@ -98,7 +98,7 @@ def test_oobcommand() -> None:
                 expected_repeat_number=expected_repeat_number,
             )
 
-        websocket.send_json(dict(type="oobcommand", command="d"))
+        websocket.send_json(dict(type="weave_direction", forward=False))
         reply = receive_dict(websocket)
         assert reply == dict(type="WeaveDirection", forward=False)
 
@@ -121,28 +121,16 @@ def test_oobcommand() -> None:
         assert expected_repeat_number == 0
 
         # Change direction to forward
-        websocket.send_json(dict(type="oobcommand", command="d"))
+        websocket.send_json(dict(type="weave_direction", forward=True))
         expected_pick_number += 1
         reply = receive_dict(websocket)
         assert reply == dict(type="WeaveDirection", forward=True)
 
-        # Toggle error flag on and off
-        websocket.send_json(dict(type="oobcommand", command="e"))
-        reply = receive_dict(websocket)
-        assert reply == dict(
-            type="LoomState",
-            shed_fully_closed=True,
-            pick_wanted=False,
-            error=True,
-        )
-
-        websocket.send_json(dict(type="oobcommand", command="e"))
-        reply = receive_dict(websocket)
-        assert reply == dict(
-            type="LoomState",
-            shed_fully_closed=True,
-            pick_wanted=False,
-            error=False,
+        command_next_pick(
+            websocket=websocket,
+            jump_pending=False,
+            expected_pick_number=expected_pick_number,
+            expected_repeat_number=expected_repeat_number,
         )
 
 
@@ -166,14 +154,7 @@ def command_next_pick(
         Expected repeat number of the next pick
     """
     websocket.send_json(dict(type="oobcommand", command="n"))
-    expected_replies: list[dict[str, Any]] = [
-        dict(
-            type="LoomState",
-            shed_fully_closed=True,
-            pick_wanted=True,
-            error=False,
-        )
-    ]
+    expected_replies: list[dict[str, Any]] = []
     if jump_pending:
         expected_replies += [
             dict(
@@ -187,18 +168,6 @@ def command_next_pick(
             type="CurrentPickNumber",
             pick_number=expected_pick_number,
             repeat_number=expected_repeat_number,
-        ),
-        dict(
-            type="LoomState",
-            shed_fully_closed=False,
-            pick_wanted=False,
-            error=False,
-        ),
-        dict(
-            type="LoomState",
-            shed_fully_closed=True,
-            pick_wanted=False,
-            error=False,
         ),
     ]
     for expected_reply in expected_replies:
