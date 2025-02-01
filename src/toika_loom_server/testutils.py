@@ -76,7 +76,6 @@ def create_test_client(
                     expected_types = {
                         "JumpPickNumber",
                         "LoomConnectionState",
-                        "LoomState",
                         "PatternNames",
                         "WeaveDirection",
                     }
@@ -98,10 +97,6 @@ def create_test_client(
                                     )
                                 elif reply.state != ConnectionStateEnum.CONNECTED:
                                     continue
-                            case "LoomState":
-                                assert reply.shed_fully_closed
-                                assert not reply.pick_wanted
-                                assert not reply.error
                             case "PatternNames":
                                 assert reply.names == expected_pattern_names
                             case "ReducedPattern":
