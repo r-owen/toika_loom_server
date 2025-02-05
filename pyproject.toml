@@ -11,8 +11,9 @@ dynamic = ["version"]
 description = "Web server that drives a Toika dobby loom"
 readme = "README.md"
 dependencies = [
-  "fastapi >= 0.115",
+  "base_loom_server >= 0.1",
   "dtx_to_wif >= 3.0",
+  "fastapi >= 0.115",
   "pyserial-asyncio >= 0.6",
 ]
 authors = [
