@@ -11,10 +11,7 @@ dynamic = ["version"]
 description = "Web server that drives a Toika dobby loom"
 readme = "README.md"
 dependencies = [
-  "base_loom_server >= 0.1",
-  "dtx_to_wif >= 3.0",
-  "fastapi >= 0.115",
-  "pyserial-asyncio >= 0.6",
+  "base_loom_server >= 0.2",
 ]
 authors = [
   { name="Russell Owen", email="r3owen@gmail.com" },
@@ -28,22 +25,7 @@ requires-python = ">=3.11"
 
 [project.optional-dependencies]
 dev = [
-  "pre-commit >= 3.8",
-  "pytest >= 8.3",
-  "pytest-asyncio >= 0.24",
-]
-
-# Needed due to including package data below
-[tool.setuptools.packages.find]
-where = ["src"]
-
-[tool.setuptools.package-data]
-"toika_loom_server" = [
-  "py.typed",
-  "display.css",
-  "display.html_template",
-  "display.js",
-  "favicon-32x32.png"
+  "base_loom_server[dev] >= 0.2",
 ]
 
 [project.scripts]

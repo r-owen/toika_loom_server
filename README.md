@@ -153,15 +153,27 @@ You may also want to reset the database if you are weaving a new project and don
 
 ## Developer Tips
 
-* Download the source code from [github](https://github.com/r-owen/toika_loom_server.git),
-  or make a fork and download that.
+* Consider creating your own virtual environment using venv
+  (or conda if you are using anaconda python).
+  See instructions on line.
 
-* Inside the directory, issue the following commands:
+* Most of the work is done in base package [base_loom_server](https://github.com/r-owen/base_loom_server.git),
+  so unless you are sure you only want to work on just the `toika_loom_server` package,
+  your first step is to install `base_loom_server` as per the Developer Tips section of its readme.
 
-    * **pip install -e .** (note the final period) to make an "editable installation" of the package.
-      An editable installation runs from the source code, so changes you make to the source are used when you run or test the code, without the need to reinstall the package.
+* Now install `toika_loom_server`. The process is almost identical to installing [base_loom_server](https://github.com/r-owen/base_loom_server.git):
+
+  * Download `toika_loom_server` source code from [github](https://github.com/r-owen/toika_loom_server.git).
+
+  * Inside that directory issue the following commands:
+
+    * **pip install -e .** (note the final period) to make an editable installation.
+      Or install with **pip install -e .'[dev]'** if you did not install dev tools
+      when you installed `base_loom_server` (and it is always safe to use).
 
     * **pre-commit install** to activate the pre-commit hooks.
+    
+    * **pytest** to test your installation.
 
 * You may run a mock loom by starting the server with: **run_toika_loom mock**.
   The mock loom does not use a serial port.
