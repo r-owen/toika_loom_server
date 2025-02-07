@@ -185,6 +185,8 @@ You may also want to reset the database if you are weaving a new project and don
 
 * In mock mode the web page shows a few extra controls for debugging.
 
+* To run mypy run: ***MYPYPATH=src mypy .***. This avoids complaints about module name ambiguity.
+
 * Warning: the web server's automatic reload feature, which reloads Python code whenever you save changes, *does not work* with this software.
   Instead you have to kill the web server by typing control-C several times, until you get a terminal prompt, then run the server again.
   This may be a bug in uvicorn; see [this discussion](https://github.com/encode/uvicorn/discussions/2075) for more information.
