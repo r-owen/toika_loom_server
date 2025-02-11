@@ -4,7 +4,6 @@ import pathlib
 
 from base_loom_server.base_loom_server import BaseLoomServer
 from base_loom_server.client_replies import MessageSeverityEnum, ShaftStateEnum
-from base_loom_server.reduced_pattern import Pick
 
 from .mock_loom import MockLoom
 
@@ -56,10 +55,10 @@ class LoomServer(BaseLoomServer):
         # so the shaft state is always DONE
         self.shaft_state = ShaftStateEnum.DONE
 
-    async def write_shafts_to_loom(self, pick: Pick) -> None:
+    async def write_shafts_to_loom(self, shaft_word: int) -> None:
         """Send a shaft_word to the loom"""
-        await self.write_to_loom(pick.shaft_word.to_bytes(length=4, byteorder="big"))
-        self.shaft_word = pick.shaft_word
+        await self.write_to_loom(shaft_word.to_bytes(length=4, byteorder="big"))
+        self.shaft_word = shaft_word
 
     async def handle_loom_reply(self, reply_bytes: bytes) -> None:
         """Process one reply from the loom."""
