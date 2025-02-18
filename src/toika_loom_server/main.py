@@ -1,16 +1,16 @@
 import importlib.resources
 
-from base_loom_server.app_runner import AppRunner
 from fastapi import FastAPI
 
-from .loom_server import LoomServer
+from .loom_server import LoomServer, ToikaAppRunner
 
 PKG_NAME = "toika_loom_server"
 PKG_FILES = importlib.resources.files(PKG_NAME)
 
 app = FastAPI()
 
-app_runner = AppRunner(
+
+app_runner = ToikaAppRunner(
     app=app,
     server_class=LoomServer,
     favicon=PKG_FILES.joinpath("favicon-32x32.png").read_bytes(),

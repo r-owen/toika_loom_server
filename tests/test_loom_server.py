@@ -8,4 +8,4 @@ from toika_loom_server.main import app
 
 class TestLoomServer(BaseTestLoomServer):
     app = app
-    motion_reported = False
+    extra_args = ()  # ("--direction-control", "loom")

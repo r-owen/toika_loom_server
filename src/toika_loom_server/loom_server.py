@@ -1,11 +1,29 @@
 __all__ = ["LoomServer"]
 
+import argparse
 import pathlib
 
+from base_loom_server.app_runner import AppRunner
 from base_loom_server.base_loom_server import BaseLoomServer
 from base_loom_server.client_replies import MessageSeverityEnum, ShaftStateEnum
 
 from .mock_loom import MockLoom
+
+AllowedDirectionControlValues = ("loom", "software")
+
+
+class ToikaAppRunner(AppRunner):
+    def create_argument_parser(self) -> argparse.ArgumentParser:
+        parser = super().create_argument_parser()
+        parser.add_argument(
+            "--direction-control",
+            help="What controls the direction of weaving? Must be either "
+            "loom: the button on dobby head, "
+            "or software: the up/down arrow button next to the pattern display",
+            choices=AllowedDirectionControlValues,
+            default="software",
+        )
+        return parser
 
 
 class LoomServer(BaseLoomServer):
@@ -26,6 +44,8 @@ class LoomServer(BaseLoomServer):
         A rescue aid, in case the database gets corrupted.
     verbose : bool
         If True, log diagnostic information.
+    direction_control : str
+        Which determines weave direction: must be "loom" or "software".
     name : str
         User-assigned loom name.
     db_path : pathlib.Path | None
@@ -33,12 +53,16 @@ class LoomServer(BaseLoomServer):
         Intended for unit tests, to avoid stomping on the real database.
     """
 
+    loom_reports_motion = False
+    loom_reports_direction = False
+
     def __init__(
         self,
         serial_port: str,
         translation_dict: dict[str, str],
         reset_db: bool,
         verbose: bool,
+        direction_control: str,
         name: str = "toika",
         db_path: pathlib.Path | None = None,
     ) -> None:
@@ -53,7 +77,12 @@ class LoomServer(BaseLoomServer):
         )
         # The loom does not report motion state
         # so the shaft state is always DONE
+        if direction_control not in AllowedDirectionControlValues:
+            raise ValueError(
+                f"{direction_control=} must be one of {AllowedDirectionControlValues}"
+            )
         self.shaft_state = ShaftStateEnum.DONE
+        self.enable_software_weave_direction = direction_control == "software"
 
     async def write_shafts_to_loom(self, shaft_word: int) -> None:
         """Send a shaft_word to the loom"""
@@ -78,6 +107,14 @@ class LoomServer(BaseLoomServer):
                 severity=MessageSeverityEnum.WARNING,
             )
             return
+
+        if not self.enable_software_weave_direction:
+            # Loom controls weave direction, and we don't know the state
+            # of the loom's direction button until it requests a new pick
+            new_weave_forward = reply == "1"
+            if new_weave_forward != self.weave_forward:  # type: ignore
+                self.weave_forward = new_weave_forward
+                await self.report_weave_direction()
 
         await self.handle_next_pick_request()
         await self.report_shaft_state()
