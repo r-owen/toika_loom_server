@@ -1,6 +1,7 @@
 __pycache__
 .coverage
 *.egg-info
-build
-dist
+build/
+dist/
+site/
 version.py
