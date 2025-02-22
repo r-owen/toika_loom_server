@@ -19,27 +19,33 @@ class MockLoom(BaseMockLoom):
     * Write commands to the command writer.
     """
 
+    terminator = b""
+
+    async def basic_read(self) -> bytes:
+        """Read one command to the loom.
+
+        Perform no error checking, except that self.reader exists.
+        """
+        assert self.reader is not None  # make mypy happy
+        return await self.reader.readexactly(4)
+
     async def handle_read_bytes(self, read_bytes: bytes) -> None:
         """Handle one command from the web server."""
 
-        if len(read_bytes) == 5:
-            # read_bytes should be a 32 bit int
-            # specifying which shafts to raise
-            if not self.pick_wanted:  # type: ignore
-                # Ignore the command unless a pick is wanted
-                return
+        if len(read_bytes) != 4:
+            self.log.warning(f"MockLoom: ignoring command {read_bytes!r}; length != 4")
+            return
 
-            self.shaft_word = int.from_bytes(read_bytes[0:4], byteorder="big")
-            self.pick_wanted = False
-            await self.report_pick_wanted()
-            await self.report_shafts()
-        elif len(read_bytes) == 3 and read_bytes[0:1] == b"#":
-            # Out of band command specific to the mock loom.
-            cmdstr = read_bytes.decode()
-            await self.oob_command(cmdstr[1:])
+        if not self.pick_wanted:  # type: ignore
+            self.log.warning(
+                f"MockLoom: ignoring command: {read_bytes!r}; pick not wanted"
+            )
+            return
 
-        else:
-            self.log.warning(f"MockLoom: unrecognized command: {read_bytes!r}")
+        self.shaft_word = int.from_bytes(read_bytes, byteorder="big")
+        self.pick_wanted = False
+        await self.report_pick_wanted()
+        await self.report_shafts()
 
     async def move(self, shaft_word: int) -> None:
         """This loom does not report shafts moving, so skip the usual code."""
@@ -55,7 +61,7 @@ class MockLoom(BaseMockLoom):
 
     async def report_pick_wanted(self) -> None:
         if self.pick_wanted:
-            reply = "1" if self.weave_forward else "2"
+            reply = b"\x01" if self.weave_forward else b"\x02"
             await self.write(reply)
 
     async def report_shafts(self) -> None:

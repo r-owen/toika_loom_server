@@ -84,23 +84,30 @@ class LoomServer(BaseLoomServer):
         self.shaft_state = ShaftStateEnum.DONE
         self.enable_software_weave_direction = direction_control == "software"
 
+    async def basic_read_loom(self) -> bytes:
+        """Read one reply_bytes from the loom.
+
+        Perform no error checking, except that self.loom_reader exists.
+        """
+        assert self.loom_reader is not None
+        return await self.loom_reader.readexactly(1)
+
     async def write_shafts_to_loom(self, shaft_word: int) -> None:
         """Send a shaft_word to the loom"""
         await self.write_to_loom(shaft_word.to_bytes(length=4, byteorder="big"))
         self.shaft_word = shaft_word
 
     async def handle_loom_reply(self, reply_bytes: bytes) -> None:
-        """Process one reply from the loom."""
-        reply = reply_bytes.decode().strip()
+        """Process one reply_bytes from the loom."""
         # The only possible replies from the loom are:
-        # "1": request next forward pick
-        # "2": request next backward pick
+        # b"\x01": request next forward pick
+        # b"\x02": request next backward pick
         # TODO: allow the user to choose whether to use the loom's
         # commanded direction (respect the "reverse" button)
         # or the software's commanded direction.
         # For now only the software works.
-        if reply not in {"1", "2"}:
-            message = f"unexpected loom reply {reply!r}: should be '1' or '2'"
+        if reply_bytes not in {b"\x01", b"\x02"}:
+            message = f"unexpected loom reply_bytes {reply_bytes!r}: should be b'\x01' or b'\x02'"
             self.log.warning(f"LoomServer: {message}")
             await self.report_command_problem(
                 message=message,
@@ -111,7 +118,7 @@ class LoomServer(BaseLoomServer):
         if not self.enable_software_weave_direction:
             # Loom controls weave direction, and we don't know the state
             # of the loom's direction button until it requests a new pick
-            new_weave_forward = reply == "1"
+            new_weave_forward = reply_bytes == b"\x01"
             if new_weave_forward != self.weave_forward:  # type: ignore
                 self.weave_forward = new_weave_forward
                 await self.report_weave_direction()

@@ -17,11 +17,9 @@ async def create_loom():
         yield loom, reader, writer
 
 
-async def read(reader: StreamReaderType, timeout: float = 1) -> str:
+async def read(reader: StreamReaderType, timeout: float = 1) -> bytes:
     async with asyncio.timeout(timeout):
-        reply_bytes = await reader.readuntil(MockLoom.terminator)
-        assert reply_bytes[-1:] == MockLoom.terminator
-        return reply_bytes[:-1].decode()
+        return await reader.readexactly(1)
 
 
 async def write(writer: StreamWriterType, command: bytes, timeout: float = 1) -> None:
@@ -34,9 +32,9 @@ async def test_raise_shafts() -> None:
     async with create_loom() as (loom, reader, writer):
         for shaftword in (0x0, 0x1, 0x5, 0xFE, 0xFF19, 0xFFFFFFFE, 0xFFFFFFFF):
             # Tell mock loom to request the next pick
-            await write(writer, b"#n")
+            await loom.oob_command("n")
             reply = await read(reader)
-            assert reply == "1"
+            assert reply == b"\x01"
             # Send the requested shaft information
             loom.command_event.clear()
             await write(writer, shaftword.to_bytes(length=4, byteorder="big"))
@@ -48,17 +46,17 @@ async def test_raise_shafts() -> None:
 async def test_oob_next_pick_and_toggle_direction() -> None:
     async with create_loom() as (loom, reader, writer):
         for expected_direction in (2, 1, 2, 1, 2, 1):
-            await write(writer, b"#d")
+            await loom.oob_command("d")
             for _ in range(3):
-                await write(writer, b"#n")
+                await loom.oob_command("n")
                 reply = await read(reader)
-                assert reply == str(expected_direction)
+                assert reply == expected_direction.to_bytes(length=1)
         assert not loom.done_task.done()
 
 
 async def test_oob_close_connection() -> None:
     async with create_loom() as (loom, reader, writer):
-        await write(writer, b"#c")
+        await loom.oob_command("c")
         async with asyncio.timeout(1):
             await loom.done_task
         assert loom.writer.is_closing()
