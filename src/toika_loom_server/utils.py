@@ -27,13 +27,8 @@ def reverse_bits(bitmask: int, num_bits: int) -> int:
     if bitmask > max_value:
         raise ValueError(f"{bitmask=} > {max_value}")
 
-    new_value = 0
-    for _ in range(num_bits):
-        new_value <<= 1
-        if bitmask & 1:
-            new_value ^= 1
-        bitmask >>= 1
-    return new_value
+    input_binstr = f"{bitmask:0{num_bits}b}"
+    return int(input_binstr[::-1], base=2)
 
 
 def bytes_from_shaft_word(shaft_word: int, num_bytes: int) -> bytes:
