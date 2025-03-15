@@ -1,18 +1,20 @@
 import asyncio
 import contextlib
 
+import pytest
 from base_loom_server.mock_streams import StreamReaderType, StreamWriterType
 
 from toika_loom_server.mock_loom import MockLoom
+from toika_loom_server.utils import bytes_from_shaft_word
 
 # No need to reduce MockLoom.motion_duration to speed up tests
 # because the Toika loom does not report motion state.
 
 
 @contextlib.asynccontextmanager
-async def create_loom():
+async def create_loom(num_shafts: int = 16):
     """Create a MockLoom."""
-    async with MockLoom(verbose=True) as loom:
+    async with MockLoom(num_shafts=num_shafts, verbose=True) as loom:
         reader, writer = await loom.open_client_connection()
         yield loom, reader, writer
 
@@ -29,7 +31,7 @@ async def write(writer: StreamWriterType, command: bytes, timeout: float = 1) ->
 
 
 async def test_raise_shafts() -> None:
-    async with create_loom() as (loom, reader, writer):
+    async with create_loom(num_shafts=32) as (loom, reader, writer):
         for shaftword in (0x0, 0x1, 0x5, 0xFE, 0xFF19, 0xFFFFFFFE, 0xFFFFFFFF):
             # Tell mock loom to request the next pick
             await loom.oob_command("n")
@@ -37,7 +39,9 @@ async def test_raise_shafts() -> None:
             assert reply == b"\x01"
             # Send the requested shaft information
             loom.command_event.clear()
-            await write(writer, shaftword.to_bytes(length=4, byteorder="big"))
+            await write(
+                writer, bytes_from_shaft_word(shaftword, num_bytes=loom.num_shafts // 8)
+            )
             await loom.command_event.wait()
             assert loom.shaft_word == shaftword
         assert not loom.done_task.done()
@@ -61,3 +65,10 @@ async def test_oob_close_connection() -> None:
             await loom.done_task
         assert loom.writer.is_closing()
         assert loom.reader.at_eof()
+
+
+async def test_invalid_num_shafts() -> None:
+    for bad_num_shafts in (0, 1, 7, 9, 15):
+        with pytest.raises(ValueError):
+            async with create_loom(num_shafts=bad_num_shafts) as (loom, reader, writer):
+                pass

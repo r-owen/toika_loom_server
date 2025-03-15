@@ -2,6 +2,8 @@ __all__ = ["MockLoom"]
 
 from base_loom_server.base_mock_loom import BaseMockLoom
 
+from toika_loom_server.utils import shaft_word_from_bytes
+
 
 class MockLoom(BaseMockLoom):
     """Simulate a Toika ES dobby loom.
@@ -21,19 +23,26 @@ class MockLoom(BaseMockLoom):
 
     terminator = b""
 
+    def __init__(self, num_shafts: int, verbose: bool = True) -> None:
+        if num_shafts % 8 != 0:
+            raise ValueError(f"num_shafts={num_shafts} must be a multiple of 8")
+        super().__init__(num_shafts=num_shafts, verbose=verbose)
+
     async def basic_read(self) -> bytes:
         """Read one command to the loom.
 
         Perform no error checking, except that self.reader exists.
         """
         assert self.reader is not None  # make mypy happy
-        return await self.reader.readexactly(4)
+        return await self.reader.readexactly(self.num_shafts // 8)
 
     async def handle_read_bytes(self, read_bytes: bytes) -> None:
         """Handle one command from the web server."""
 
-        if len(read_bytes) != 4:
-            self.log.warning(f"MockLoom: ignoring command {read_bytes!r}; length != 4")
+        if len(read_bytes) != self.num_shafts // 8:
+            self.log.warning(
+                f"MockLoom: ignoring command {read_bytes!r}; length != {self.num_shafts // 8}"
+            )
             return
 
         if not self.pick_wanted:  # type: ignore
@@ -42,7 +51,9 @@ class MockLoom(BaseMockLoom):
             )
             return
 
-        self.shaft_word = int.from_bytes(read_bytes, byteorder="big")
+        self.shaft_word = shaft_word_from_bytes(
+            read_bytes, num_bytes=self.num_shafts // 8
+        )
         self.pick_wanted = False
         await self.report_pick_wanted()
         await self.report_shafts()

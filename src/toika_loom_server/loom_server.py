@@ -7,6 +7,8 @@ from base_loom_server.app_runner import AppRunner
 from base_loom_server.base_loom_server import BaseLoomServer
 from base_loom_server.client_replies import MessageSeverityEnum, ShaftStateEnum
 
+from toika_loom_server.utils import bytes_from_shaft_word
+
 from .mock_loom import MockLoom
 
 AllowedDirectionControlValues = ("loom", "software")
@@ -53,21 +55,24 @@ class LoomServer(BaseLoomServer):
         Intended for unit tests, to avoid stomping on the real database.
     """
 
+    default_name = "toika"
     loom_reports_motion = False
     loom_reports_direction = False
+    mock_loom_type = MockLoom
 
     def __init__(
         self,
+        num_shafts: int,
         serial_port: str,
         translation_dict: dict[str, str],
         reset_db: bool,
         verbose: bool,
         direction_control: str,
-        name: str = "toika",
+        name: str | None = None,
         db_path: pathlib.Path | None = None,
     ) -> None:
         super().__init__(
-            mock_loom_type=MockLoom,
+            num_shafts=num_shafts,
             serial_port=serial_port,
             translation_dict=translation_dict,
             reset_db=reset_db,
@@ -80,6 +85,10 @@ class LoomServer(BaseLoomServer):
         if direction_control not in AllowedDirectionControlValues:
             raise ValueError(
                 f"{direction_control=} must be one of {AllowedDirectionControlValues}"
+            )
+        if self.loom_info.num_shafts % 8 != 0:
+            raise ValueError(
+                f"num_shafts={self.loom_info.num_shafts} must be a multiple of 8"
             )
         self.shaft_state = ShaftStateEnum.DONE
         self.enable_software_weave_direction = direction_control == "software"
@@ -94,7 +103,10 @@ class LoomServer(BaseLoomServer):
 
     async def write_shafts_to_loom(self, shaft_word: int) -> None:
         """Send a shaft_word to the loom"""
-        await self.write_to_loom(shaft_word.to_bytes(length=4, byteorder="big"))
+        shaft_bytes = bytes_from_shaft_word(
+            shaft_word=shaft_word, num_bytes=self.loom_info.num_shafts // 8
+        )
+        await self.write_to_loom(shaft_bytes)
         self.shaft_word = shaft_word
 
     async def handle_loom_reply(self, reply_bytes: bytes) -> None:
