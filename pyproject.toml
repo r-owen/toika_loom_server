@@ -11,7 +11,7 @@ dynamic = ["version"]
 description = "Web server that drives a Toika dobby loom"
 readme = "README.md"
 dependencies = [
-  "base_loom_server >= 0.2",
+  "base_loom_server >= 0.9",
 ]
 authors = [
   { name="Russell Owen", email="r3owen@gmail.com" },
