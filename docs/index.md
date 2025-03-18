@@ -36,3 +36,9 @@ To have the loom control weaving direction, start the loom server with extra com
 ## The Software
 
 toka_loom_sever is served at [PyPI](https://pypi.org/project/toika-loom-server/). That page has links to the source repository, issue tracker, and back to this documentation.
+
+## Acknowledgements
+
+Thanks to Jukka Yrjölä and Jarkko Yrjölä from Toika for providing the API and helpful clarification.
+
+Thanks to WillowGoose ([willowlovestoweave](https://www.instagram.com/willowlovestoweave/) on Instagram) for patiently testing this software and proving valuable feedback.
