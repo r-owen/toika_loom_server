@@ -31,7 +31,7 @@ This is because the loom does not report anything when you press the direction b
 The software can't see that anything has changed until the next time the loom asks for a pick
 (i.e. when you press the pedal).
 
-To have the loom control weaving direction, start the loom server with extra command-line argument `--weave-direction loom`. To have software control weaving direction, omit this, or specify `--weave-direction software`.
+To have the loom control weaving direction, start the loom server with extra command-line argument `--direction-control loom`. To have software control weaving direction, omit this, or specify `--direction-control software`.
 
 ## The Software
 

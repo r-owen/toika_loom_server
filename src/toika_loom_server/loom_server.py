@@ -20,7 +20,7 @@ class ToikaAppRunner(AppRunner):
         parser.add_argument(
             "--direction-control",
             help="What controls the direction of weaving? Must be either "
-            "loom: the button on dobby head, "
+            "loom: the button on the dobby head, "
             "or software: the up/down arrow button next to the pattern display",
             choices=AllowedDirectionControlValues,
             default="software",
