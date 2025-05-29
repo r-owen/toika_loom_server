@@ -3,33 +3,29 @@
 Software that allows you to control a Toika dobby loom
 from any modern web browser, e.g. on a phone or tablet.
 
-The main [documentation](https://r-owen.github.io/base_loom_server/)
-explains how to install and use this software.
-
-Please also read the following Toika-specific information:
+For more information, read the main [documentation](https://r-owen.github.io/base_loom_server/), plus the Toika-Specific information below.
 
 ## Toika-Specific Information
 
-When running the Toika loom server, have must decide how you want to change weaving direction
-(weaving or unweaving). You have two choices,
+When running the Toika loom server, you must decide how you want to change weaving direction
+(between weaving and unweaving). You have two choices:
 
 * Software controls the weave direction.
-  To change direction, press the square button that shows the weave direction
-  (a green or red arrow) on the web display.
-  The physical button on the dobby head is **ignored**.
+  To change direction, press the square button on the web display that shows the weave direction
+  (a green or red arrow).
+  The REVERSE button on the dobby head is **ignored**.
 
-* The loom controls the weave direction. You have to press the physical button
-  on the dobby head to change direction. The square button showing weave direction
-  is only a display (you can't click it).
+* The dobby head controls the weave direction.
+  To change direction, toggle the REVERSE button on the dobby head.
+  The software displays the direction of the *previous* pick.
 
 If your web display device (i.e. phone or tablet) is mounted where you can easily reach it,
 then I recommend software control of direction, because the direction display will always be correct.
 
 If your web display device is *not* in a convenient location, then have the loom control direction.
 Unfortunately, in this mode the displayed direction will sometimes be wrong.
-This is because the loom does not report anything when you press the direction button.
-The software can't see that anything has changed until the next time the loom asks for a pick
-(i.e. when you press the pedal).
+This is because the loom does not report anything when you toggle the REVERSE button.
+The software can't see that anything has changed until you request the next pick.
 
 To have the loom control weaving direction, start the loom server with extra command-line argument `--direction-control loom`. To have software control weaving direction, omit this, or specify `--direction-control software`.
 
