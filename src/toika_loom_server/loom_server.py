@@ -1,31 +1,17 @@
 __all__ = ["LoomServer"]
 
-import argparse
 import pathlib
 
-from base_loom_server.app_runner import AppRunner
 from base_loom_server.base_loom_server import BaseLoomServer
-from base_loom_server.client_replies import MessageSeverityEnum, ShaftStateEnum
+from base_loom_server.enums import (
+    DirectionControlEnum,
+    MessageSeverityEnum,
+    ShaftStateEnum,
+)
 
 from toika_loom_server.utils import bytes_from_shaft_word
 
 from .mock_loom import MockLoom
-
-AllowedDirectionControlValues = ("loom", "software")
-
-
-class ToikaAppRunner(AppRunner):
-    def create_argument_parser(self) -> argparse.ArgumentParser:
-        parser = super().create_argument_parser()
-        parser.add_argument(
-            "--direction-control",
-            help="What controls the direction of weaving? Must be either "
-            "loom: the button on the dobby head, "
-            "or software: the up/down arrow button next to the pattern display",
-            choices=AllowedDirectionControlValues,
-            default="software",
-        )
-        return parser
 
 
 class LoomServer(BaseLoomServer):
@@ -34,31 +20,23 @@ class LoomServer(BaseLoomServer):
     The preferred way to create and run a LoomServer is to call
     LoomServer.amain(...).
 
-    Parameters
-    ----------
-    serial_port : str
-        The name of the serial port, e.g. "/dev/tty0".
-        If the name is "mock" then use a mock loom.
-    translation_dict : dict[str, str]
-        Translation dict.
-    reset_db : bool
-        If True, delete the old database and create a new one.
-        A rescue aid, in case the database gets corrupted.
-    verbose : bool
-        If True, log diagnostic information.
-    direction_control : str
-        Which determines weave direction: must be "loom" or "software".
-    name : str
-        User-assigned loom name.
-    db_path : pathlib.Path | None
-        Path to pattern database.
-        Intended for unit tests, to avoid stomping on the real database.
+    Args:
+        num_shafts: The number of shafts the loom has.
+        serial_port: The name of the serial port, e.g. "/dev/tty0".
+            If the name is "mock" then use a mock loom.
+        translation_dict: Language translation dict.
+        reset_db: If True, delete the old database and create a new one.
+        verbose: If True, log diagnostic information.
+        db_path: Path to the pattern database. Specify None for the
+            default path. Unit tests specify a non-None value, to avoid
+            stomping on the real database.
     """
 
     default_name = "toika"
     loom_reports_motion = False
     loom_reports_direction = False
     mock_loom_type = MockLoom
+    supports_full_direction_control = False
 
     def __init__(
         self,
@@ -67,8 +45,6 @@ class LoomServer(BaseLoomServer):
         translation_dict: dict[str, str],
         reset_db: bool,
         verbose: bool,
-        direction_control: str,
-        name: str | None = None,
         db_path: pathlib.Path | None = None,
     ) -> None:
         super().__init__(
@@ -77,21 +53,15 @@ class LoomServer(BaseLoomServer):
             translation_dict=translation_dict,
             reset_db=reset_db,
             verbose=verbose,
-            name=name,
             db_path=db_path,
         )
-        # The loom does not report motion state
-        # so the shaft state is always DONE
-        if direction_control not in AllowedDirectionControlValues:
-            raise ValueError(
-                f"{direction_control=} must be one of {AllowedDirectionControlValues}"
-            )
         if self.loom_info.num_shafts % 8 != 0:
             raise ValueError(
                 f"num_shafts={self.loom_info.num_shafts} must be a multiple of 8"
             )
+        # The loom does not report motion state
+        # so the shaft state is always DONE
         self.shaft_state = ShaftStateEnum.DONE
-        self.enable_software_weave_direction = direction_control == "software"
 
     async def basic_read_loom(self) -> bytes:
         """Read one reply_bytes from the loom.
@@ -127,13 +97,13 @@ class LoomServer(BaseLoomServer):
             )
             return
 
-        if not self.enable_software_weave_direction:
+        if self.settings.direction_control == DirectionControlEnum.LOOM:
             # Loom controls weave direction, and we don't know the state
             # of the loom's direction button until it requests a new pick
-            new_weave_forward = reply_bytes == b"\x01"
-            if new_weave_forward != self.weave_forward:  # type: ignore
-                self.weave_forward = new_weave_forward
-                await self.report_weave_direction()
+            new_direction_forward = reply_bytes == b"\x01"
+            if new_direction_forward != self.direction_forward:  # type: ignore
+                self.direction_forward = new_direction_forward
+                await self.report_direction()
 
         await self.handle_next_pick_request()
         await self.report_shaft_state()

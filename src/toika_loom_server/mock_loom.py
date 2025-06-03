@@ -66,7 +66,7 @@ class MockLoom(BaseMockLoom):
 
     async def report_direction(self) -> None:
         if self.verbose:
-            self.log.info(f"{self}.weave_forward={self.weave_forward}")
+            self.log.info(f"{self}.direction_forward={self.direction_forward}")
 
     async def report_motion_state(self) -> None:
         if self.verbose:
@@ -74,7 +74,7 @@ class MockLoom(BaseMockLoom):
 
     async def report_pick_wanted(self) -> None:
         if self.pick_wanted:
-            reply = b"\x01" if self.weave_forward else b"\x02"
+            reply = b"\x01" if self.direction_forward else b"\x02"
             await self.write(reply)
 
     async def report_shafts(self) -> None:
