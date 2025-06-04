@@ -2,8 +2,8 @@
 
 ## 0.7 2025-??-??
 
-Update for base_loom_server 0.19, which adds a Settings panel.
-Add this version history.
+* Update for base_loom_server 0.19, which adds a Settings panel.
+* Add this version history.
 
 ## 0.6.3 2025-03-31
 
