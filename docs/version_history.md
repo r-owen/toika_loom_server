@@ -1,6 +1,11 @@
 # Version History
 
-## 0.7 2025-??-??
+## 0.8 2025-06-26
+
+* Update for base_loom_server 0.24.
+  (base_loom_server 0.19 will still work, but two unit tests will fail.)
+
+## 0.7 2025-06-03
 
 * Update for base_loom_server 0.19, which adds a Settings panel.
 * Add this version history.
