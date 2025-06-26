@@ -105,5 +105,6 @@ class LoomServer(BaseLoomServer):
                 self.direction_forward = new_direction_forward
                 await self.report_direction()
 
-        await self.handle_next_pick_request()
-        await self.report_shaft_state()
+        did_advance = await self.handle_next_pick_request()
+        if did_advance:
+            await self.report_shaft_state()
