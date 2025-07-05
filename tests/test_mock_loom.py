@@ -3,7 +3,6 @@ import contextlib
 from collections.abc import AsyncGenerator
 
 import pytest
-from base_loom_server.base_mock_loom import BaseMockLoom
 from base_loom_server.mock_streams import StreamReaderType, StreamWriterType
 
 from toika_loom_server.mock_loom import MockLoom
@@ -16,7 +15,7 @@ from toika_loom_server.utils import bytes_from_shaft_word
 @contextlib.asynccontextmanager
 async def create_loom(
     num_shafts: int = 16,
-) -> AsyncGenerator[tuple[BaseMockLoom, StreamReaderType, StreamWriterType]]:
+) -> AsyncGenerator[tuple[MockLoom, StreamReaderType, StreamWriterType]]:
     """Create a MockLoom."""
     async with MockLoom(num_shafts=num_shafts, verbose=True) as loom:
         reader, writer = await loom.open_client_connection()

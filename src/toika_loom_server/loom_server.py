@@ -1,13 +1,8 @@
 __all__ = ["LoomServer"]
 
-import pathlib
 
 from base_loom_server.base_loom_server import BaseLoomServer
-from base_loom_server.enums import (
-    DirectionControlEnum,
-    MessageSeverityEnum,
-    ShaftStateEnum,
-)
+from base_loom_server.enums import DirectionControlEnum, MessageSeverityEnum
 
 from toika_loom_server.utils import bytes_from_shaft_word
 
@@ -24,7 +19,6 @@ class LoomServer(BaseLoomServer):
         num_shafts: The number of shafts the loom has.
         serial_port: The name of the serial port, e.g. "/dev/tty0".
             If the name is "mock" then use a mock loom.
-        translation_dict: Language translation dict.
         reset_db: If True, delete the old database and create a new one.
         verbose: If True, log diagnostic information.
         db_path: Path to the pattern database. Specify None for the
@@ -38,30 +32,11 @@ class LoomServer(BaseLoomServer):
     mock_loom_type = MockLoom
     supports_full_direction_control = False
 
-    def __init__(
-        self,
-        num_shafts: int,
-        serial_port: str,
-        translation_dict: dict[str, str],
-        reset_db: bool,
-        verbose: bool,
-        db_path: pathlib.Path | None = None,
-    ) -> None:
-        super().__init__(
-            num_shafts=num_shafts,
-            serial_port=serial_port,
-            translation_dict=translation_dict,
-            reset_db=reset_db,
-            verbose=verbose,
-            db_path=db_path,
-        )
+    def __post_init__(self) -> None:
         if self.loom_info.num_shafts % 8 != 0:
             raise ValueError(
                 f"num_shafts={self.loom_info.num_shafts} must be a multiple of 8"
             )
-        # The loom does not report motion state
-        # so the shaft state is always DONE
-        self.shaft_state = ShaftStateEnum.DONE
 
     async def basic_read_loom(self) -> bytes:
         """Read one reply_bytes from the loom.

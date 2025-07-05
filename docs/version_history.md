@@ -1,5 +1,9 @@
 # Version History
 
+## 0.9 2025-07-05
+
+* Update for base_loom_server 0.26, which is required.
+
 ## 0.8 2025-06-26
 
 * Update for base_loom_server 0.24.

@@ -23,10 +23,9 @@ class MockLoom(BaseMockLoom):
 
     terminator = b""
 
-    def __init__(self, num_shafts: int, verbose: bool = True) -> None:
-        if num_shafts % 8 != 0:
-            raise ValueError(f"num_shafts={num_shafts} must be a multiple of 8")
-        super().__init__(num_shafts=num_shafts, verbose=verbose)
+    def __post_init__(self) -> None:
+        if self.num_shafts % 8 != 0:
+            raise ValueError(f"num_shafts={self.num_shafts} must be a multiple of 8")
 
     async def basic_read(self) -> bytes:
         """Read one command to the loom.
