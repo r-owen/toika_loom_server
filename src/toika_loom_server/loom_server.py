@@ -76,7 +76,8 @@ class LoomServer(BaseLoomServer):
             # Loom controls weave direction, and we don't know the state
             # of the loom's direction button until it requests a new pick
             new_direction_forward = reply_bytes == b"\x01"
-            if new_direction_forward != self.direction_forward:  # type: ignore
+            # Note: type:ignore is needed when running mypy from pre-commit.
+            if new_direction_forward != self.direction_forward:  # type: ignore[has-type]
                 self.direction_forward = new_direction_forward
                 await self.report_direction()
 

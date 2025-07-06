@@ -43,8 +43,8 @@ class MockLoom(BaseMockLoom):
                 f"MockLoom: ignoring command {read_bytes!r}; length != {self.num_shafts // 8}"
             )
             return
-
-        if not self.pick_wanted:  # type: ignore
+        # Note: type:ignore is needed when running mypy from pre-commit.
+        if not self.pick_wanted:  # type: ignore[has-type]
             self.log.warning(
                 f"MockLoom: ignoring command: {read_bytes!r}; pick not wanted"
             )
