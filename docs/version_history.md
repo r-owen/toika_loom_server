@@ -1,5 +1,13 @@
 # Version History
 
+## 0.9.1 2025-
+
+Internal changes:
+
+* Improve the mypy configuration to be pickier.
+* Switch to ruff for checking and formatting.
+* Update the code accordingly.
+
 ## 0.9 2025-07-05
 
 * Update for base_loom_server 0.26, which is required.
