@@ -34,9 +34,7 @@ class LoomServer(BaseLoomServer):
 
     def __post_init__(self) -> None:
         if self.loom_info.num_shafts % 8 != 0:
-            raise ValueError(
-                f"num_shafts={self.loom_info.num_shafts} must be a multiple of 8"
-            )
+            raise ValueError(f"num_shafts={self.loom_info.num_shafts} must be a multiple of 8")
 
     async def basic_read_loom(self) -> bytes:
         """Read one reply_bytes from the loom.
@@ -47,10 +45,8 @@ class LoomServer(BaseLoomServer):
         return await self.loom_reader.readexactly(1)
 
     async def write_shafts_to_loom(self, shaft_word: int) -> None:
-        """Send a shaft_word to the loom"""
-        shaft_bytes = bytes_from_shaft_word(
-            shaft_word=shaft_word, num_bytes=self.loom_info.num_shafts // 8
-        )
+        """Send a shaft_word to the loom."""
+        shaft_bytes = bytes_from_shaft_word(shaft_word=shaft_word, num_bytes=self.loom_info.num_shafts // 8)
         await self.write_to_loom(shaft_bytes)
         self.shaft_word = shaft_word
 
@@ -59,10 +55,6 @@ class LoomServer(BaseLoomServer):
         # The only possible replies from the loom are:
         # b"\x01": request next forward pick
         # b"\x02": request next backward pick
-        # TODO: allow the user to choose whether to use the loom's
-        # commanded direction (respect the "reverse" button)
-        # or the software's commanded direction.
-        # For now only the software works.
         if reply_bytes not in {b"\x01", b"\x02"}:
             message = f"unexpected loom reply_bytes {reply_bytes!r}: should be b'\x01' or b'\x02'"
             self.log.warning(f"LoomServer: {message}")

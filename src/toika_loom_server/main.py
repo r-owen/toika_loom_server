@@ -20,4 +20,5 @@ app_runner = AppRunner(
 
 
 def run_toika_loom() -> None:
+    """Run the Toika loom server."""
     app_runner.run()

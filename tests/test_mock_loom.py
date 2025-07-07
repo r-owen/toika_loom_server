@@ -42,9 +42,7 @@ async def test_raise_shafts() -> None:
             assert reply == b"\x01"
             # Send the requested shaft information
             loom.command_event.clear()
-            await write(
-                writer, bytes_from_shaft_word(shaftword, num_bytes=loom.num_shafts // 8)
-            )
+            await write(writer, bytes_from_shaft_word(shaftword, num_bytes=loom.num_shafts // 8))
             await loom.command_event.wait()
             assert loom.shaft_word == shaftword
         assert not loom.done_task.done()

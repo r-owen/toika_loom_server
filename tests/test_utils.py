@@ -16,12 +16,12 @@ def get_random_word(num_bits: int) -> int:
 
 
 async def test_reverse_bits() -> None:
-    assert 0 == reverse_bits(0, num_bits=1)
-    assert 1 == reverse_bits(1, num_bits=1)
+    assert reverse_bits(0, num_bits=1) == 0
+    assert reverse_bits(1, num_bits=1) == 1
     for num_bits in (7, 8, 9, 15, 16, 17, 31, 32):
-        assert 0 == reverse_bits(0, num_bits=num_bits)
+        assert reverse_bits(0, num_bits=num_bits) == 0
         assert 1 << (num_bits - 1) == reverse_bits(1, num_bits=num_bits)
-        assert 1 == reverse_bits(1 << (num_bits - 1), num_bits=num_bits)
+        assert reverse_bits(1 << (num_bits - 1), num_bits=num_bits) == 1
         for _ in range(100):
             value = get_random_word(num_bits=num_bits)
             reversed_value = reverse_bits(value, num_bits=num_bits)
@@ -39,9 +39,7 @@ async def test_reverse_bits() -> None:
 async def test_bytes_from_shaft_word() -> None:
     for num_bytes in (1, 2, 3, 4):
         num_bits = num_bytes * 8
-        assert int(0).to_bytes(length=num_bytes) == bytes_from_shaft_word(
-            0, num_bytes=num_bytes
-        )
+        assert (0).to_bytes(length=num_bytes) == bytes_from_shaft_word(0, num_bytes=num_bytes)
         # bytes_from_shaft_word has the effect of reversing
         # the bits within each byte, so try doing this manually
         # one bit at a time
@@ -54,9 +52,9 @@ async def test_bytes_from_shaft_word() -> None:
                 assert value.to_bytes(length=num_bytes) == bytes_from_shaft_word(
                     reversed_value, num_bytes=num_bytes
                 )
-                assert reversed_value.to_bytes(
-                    length=num_bytes
-                ) == bytes_from_shaft_word(value, num_bytes=num_bytes)
+                assert reversed_value.to_bytes(length=num_bytes) == bytes_from_shaft_word(
+                    value, num_bytes=num_bytes
+                )
                 assert (
                     shaft_word_from_bytes(
                         bytes_from_shaft_word(value, num_bytes=num_bytes),
@@ -77,9 +75,7 @@ async def test_bytes_from_shaft_word() -> None:
 
             # Compute the expected value by reversing the bits within each byte
             shaft_word_as_bytes = shaft_word.to_bytes(length=num_bytes, byteorder="big")
-            expected_bytes = bytes(
-                bytearray(reverse_bits(elt, num_bits=8) for elt in shaft_word_as_bytes)
-            )
+            expected_bytes = bytes(bytearray(reverse_bits(elt, num_bits=8) for elt in shaft_word_as_bytes))
             assert expected_bytes == shaft_bytes
 
             assert shaft_word == shaft_word_from_bytes(shaft_bytes, num_bytes=num_bytes)

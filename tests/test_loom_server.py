@@ -7,5 +7,6 @@ from toika_loom_server.main import app
 
 
 class TestLoomServer(BaseTestLoomServer):
+    """Run the standard loom server unit tests."""
+
     app = app
-    extra_args = ()  # ("--direction-control", "loom")
