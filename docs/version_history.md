@@ -1,6 +1,11 @@
 # Version History
 
-## 0.9.1 2025-
+## 0.10 2025-10-02
+
+* Simplify BaseLoomServer slightly.
+  This change requires base_loom_server 0.34.
+
+## 0.9.1 2025-07-07
 
 Internal changes:
 
