@@ -25,7 +25,7 @@ requires-python = ">=3.11"
 
 [project.optional-dependencies]
 dev = [
-  "base_loom_server[dev] >= 0.26",
+  "base_loom_server[dev] >= 0.34",
 ]
 
 [project.scripts]
