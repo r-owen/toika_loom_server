@@ -1,5 +1,9 @@
 # Version History
 
+## 0.10.1 2025-10-03
+
+* Fix an incorrect dependency in pyproject.toml.
+
 ## 0.10 2025-10-02
 
 * Simplify BaseLoomServer slightly.
