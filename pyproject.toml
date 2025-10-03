@@ -11,7 +11,8 @@ dynamic = ["version"]
 description = "Web server that drives a Toika dobby loom"
 readme = "README.md"
 dependencies = [
-  "base_loom_server >= 0.19",
+  # Warning: base_loom_server appears twice
+  "base_loom_server >= 0.34",
 ]
 authors = [
   { name="Russell Owen", email="r3owen@gmail.com" },
@@ -25,6 +26,7 @@ requires-python = ">=3.11"
 
 [project.optional-dependencies]
 dev = [
+  # Warning: base_loom_server appears twice
   "base_loom_server[dev] >= 0.34",
 ]
 
