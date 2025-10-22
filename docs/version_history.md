@@ -1,5 +1,10 @@
 # Version History
 
+## 1.0 2025-10-21
+
+* The first official release.
+* The only change from 0.10.1 is that it now requires base_loom_server 1.0.
+
 ## 0.10.1 2025-10-03
 
 * Fix an incorrect dependency in pyproject.toml.
